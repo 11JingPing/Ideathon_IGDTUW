@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ctrl Freaks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #1c6b75;
+            color: white;
+            background-image: none;
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+        }
+
+        .main-bg {
+            background-color: #1c6b75;
+        }
+
+        .secondary-color-bg {
+            background-color: #07CBB8;
+        }
+
+        .secondary-color-text {
+            color: #07CBB8;
+        }
+        
+        /* New dark yellow accent color */
+        .dark-yellow-text {
+            color: #FFD700;
+        }
+
+        .chrome-accent-text {
+            color: #E0E0E0;
+        }
+        
+        .text-44 { font-size: 44px; }
+        .text-32 { font-size: 32px; }
+        .text-28 { font-size: 28px; }
+        .text-14 { font-size: 14px; }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #07CBB8;
+            color: #494949;
+            border-radius: 9999px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            z-index: 50;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #494949;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 1rem;
+            max-width: 600px;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .underline-hover:hover {
+            text-decoration: underline;
+        }
+
+        /* Styling for the comments section */
+        .comment-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        /* Chatbot specific styles */
+        .chat-message-user {
+            background-color: #07CBB8;
+            color: black;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem 1rem 0 1rem;
+            max-width: 80%;
+            align-self: flex-end;
+        }
+        .chat-message-bot {
+            background-color: rgba(255, 255, 2.1);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem 1rem 1rem 0;
+            max-width: 80%;
+            align-self: flex-start;
+        }
+
+        /* Custom style for calendar date numbers */
+        .date-number {
+            font-size: 1.5rem;
+            line-height: 2rem;
+            color: #E0E0E0; /* Chrome accent color */
+        }
+        @media (min-width: 768px) {
+            .date-number {
+                font-size: 2rem;
+                line-height: 2.5rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .date-number {
+                font-size: 3rem;
+                line-height: 1;
+            }
+        }
+    </style>
+</head>
+<body class="main-bg text-white">
+
+    <!-- App state and page rendering logic -->
+    <script>
+        window.currentPage = 'home';
+        
+        function navigate(page) {
+            window.currentPage = page;
+            const pages = ['home', 'simulator', 'learn', 'analyzer', 'events'];
+            pages.forEach(p => {
+                const element = document.getElementById(`page-${p}`);
+                if (element) {
+                    element.classList.add('hidden');
+                }
+            });
+            const currentPageElement = document.getElementById(`page-${page}`);
+            if (currentPageElement) {
+                currentPageElement.classList.remove('hidden');
+            }
+
+            // Trigger data rendering for specific pages
+            if (page === 'home') {
+                renderComments();
+            } else if (page === 'events') {
+                renderEvents();
+            } else if (page === 'learn') {
+                getDailyInsights();
+            } else if (page === 'simulator') {
+                loadPortfolio();
+            }
+        }
+    </script>
+
+    <!-- Header and Navigation -->
+    <header class="p-6 md:p-8 flex flex-col justify-center items-center text-center">
+        <div>
+            <div class="text-44 font-bold dark-yellow-text">
+                Micro-Investing for students
+            </div>
+            <div class="text-28 font-bold chrome-accent-text">
+                by CTRL Freaks
+            </div>
+        </div>
+        <nav class="mt-4 md:mt-8">
+            <ul class="flex flex-wrap justify-center space-x-4 md:space-x-8 text-28">
+                <li><a href="#" onclick="navigate('home')" class="underline-hover">Home</a></li>
+                <li><a href="#" onclick="navigate('simulator')" class="underline-hover">Simulator</a></li>
+                <li><a href="#" onclick="navigate('learn')" class="underline-hover">Learn</a></li>
+                <li><a href="#" onclick="navigate('analyzer')" class="underline-hover">Analyzer</a></li>
+                <li><a href="#" onclick="navigate('events')" class="underline-hover">Events & Mentorship</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="p-4 md:p-8">
+
+        <!-- Home Page -->
+        <div id="page-home">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                <div class="card cursor-pointer" onclick="navigate('simulator')">
+                    <h2 class="text-32 font-bold dark-yellow-text">Stock Simulator</h2>
+                    <p class="text-14 mt-2 chrome-accent-text">Test your trading skills with $100,000 in a risk-free environment.</p>
+                </div>
+                <div class="card cursor-pointer" onclick="navigate('learn')">
+                    <h2 class="text-32 font-bold dark-yellow-text">Learn Trading</h2>
+                    <p class="text-14 mt-2 chrome-accent-text">Expand your knowledge with financial terms, market insights, and educational videos.</p>
+                </div>
+                <div class="card cursor-pointer" onclick="navigate('analyzer')">
+                    <h2 class="text-32 font-bold dark-yellow-text">Risk Analyzer</h2>
+                    <p class="text-14 mt-2 chrome-accent-text">Assess the potential risks of a stock before you invest.</p>
+                </div>
+                <div class="card cursor-pointer" onclick="navigate('events')">
+                    <h2 class="text-32 font-bold dark-yellow-text">Events & Mentorship</h2>
+                    <p class="text-14 mt-2 chrome-accent-text">Connect with a community of traders and learn from the experts.</p>
+                </div>
+            </div>
+
+            <!-- Comments and Feedback Section -->
+            <div class="mt-12 p-8 rounded-xl bg-gray-800">
+                <h2 class="text-32 font-bold dark-yellow-text mb-4">Comments & Feedback</h2>
+                <div id="comments-list" class="space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Comments will be dynamically loaded here -->
+                    <p id="loading-comments" class="chrome-accent-text">Loading comments...</p>
+                </div>
+                <div class="mt-6">
+                    <h3 class="text-28 font-bold dark-yellow-text mb-2">Leave a Comment</h3>
+                    <textarea id="comment-input" class="w-full h-24 p-4 rounded-xl text-black" placeholder="Your feedback matters!"></textarea>
+                    <button id="submit-comment-btn" class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold mt-4" onclick="addComment()">Submit Comment</button>
+                    <p id="comment-status" class="mt-2 text-14"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Simulator Page -->
+        <div id="page-simulator" class="hidden">
+            <h1 class="text-44 font-bold dark-yellow-text mb-6">Stock Simulator</h1>
+            <div class="flex flex-col md:flex-row md:space-x-8">
+                <div class="w-full md:w-1/2 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">My Portfolio</h2>
+                    <p class="text-14 chrome-accent-text">Starting Capital: <span class="text-green-400">$100,000</span></p>
+                    <p class="text-14 chrome-accent-text">Current Value: <span id="portfolio-value">$100,000</span></p>
+                    <p class="text-14 mt-4 chrome-accent-text">S&P 500 Performance: <span class="text-red-400">-1.5%</span> (Simulated)</p>
+                    <div id="portfolio-list" class="mt-4">
+                        <!-- Portfolio holdings will be displayed here -->
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2 mt-8 md:mt-0 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">Trade</h2>
+                    <div class="flex flex-col space-y-4">
+                        <input id="ticker-input" type="text" placeholder="Enter stock ticker (e.g., AAPL)" class="p-4 rounded-xl text-black text-14">
+                        <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold" onclick="showStockChart()">Show Chart</button>
+                        <div id="graph-container" class="mt-4 bg-gray-700 rounded-xl p-4 h-64 flex items-center justify-center">
+                            <p class="text-14 chrome-accent-text">Enter a stock ticker and click "Show Chart" to see a graph.</p>
+                        </div>
+                        <input id="quantity-input" type="number" placeholder="Quantity" class="p-4 rounded-xl text-black text-14">
+                        <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold mt-4" onclick="buyStock()">Buy Stock</button>
+                    </div>
+                    <p id="trade-status" class="text-14 mt-4"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learn Trading Page -->
+        <div id="page-learn" class="hidden">
+            <h1 class="text-44 font-bold dark-yellow-text mb-6">Learn Trading</h1>
+            <div class="flex flex-col md:flex-row md:space-x-8">
+                <div class="w-full md:w-2/3 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">Daily Insights</h2>
+                    <div class="bg-gray-700 p-4 rounded-xl mb-4">
+                        <h3 class="text-28 font-bold">Word of the Day: <span id="word-of-day" class="dark-yellow-text">Loading...</span></h3>
+                        <p class="text-14 mt-2 chrome-accent-text" id="word-of-day-definition">Loading...</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-xl">
+                        <h3 class="text-28 font-bold">Stock of the Day: <span id="stock-of-day" class="dark-yellow-text">Loading...</span></h3>
+                        <p class="text-14 mt-2 chrome-accent-text" id="stock-of-day-change">Loading daily change...</p>
+                    </div>
+                    
+                    <h2 class="text-32 font-bold dark-yellow-text my-4">Videos</h2>
+                    <div class="flex flex-col space-y-4">
+                        <div id="video-player" class="bg-gray-700 rounded-xl p-4 h-96 flex items-center justify-center">
+                            <img src="https://placehold.co/600x400/36454F/07CBB8?text=Financial+Video+Placeholder" alt="Financial Video" class="w-full h-full object-cover rounded-lg">
+                        </div>
+                        <div class="flex">
+                            <input id="video-search-input" type="text" placeholder="Search for videos or terms" class="w-full p-4 rounded-l-xl text-black text-14">
+                            <button class="bg-gray-700 px-6 rounded-r-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3 mt-8 md:mt-0 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">What to Watch</h2>
+                    <ul class="space-y-4 text-14">
+                        <li class="p-2 rounded-lg bg-gray-700 cursor-pointer underline-hover chrome-accent-text">Intro to Candlestick Charts</li>
+                        <li class="p-2 rounded-lg bg-gray-700 cursor-pointer underline-hover chrome-accent-text">Understanding Market Volatility</li>
+                        <li class="p-2 rounded-lg bg-gray-700 cursor-pointer underline-hover chrome-accent-text">How to Read an Income Statement</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Analyzer Page -->
+        <div id="page-analyzer" class="hidden">
+            <h1 class="text-44 font-bold dark-yellow-text mb-6">Risk Analyzer</h1>
+            <div class="p-6 card max-w-2xl mx-auto">
+                <h2 class="text-32 font-bold dark-yellow-text mb-4">Analyze Stock Risk</h2>
+                <div class="flex flex-col space-y-4">
+                    <input id="analyzer-ticker" type="text" placeholder="Enter stock ticker (e.g., TSLA)" class="p-4 rounded-xl text-black text-14">
+                    <input id="maturity-time" type="number" placeholder="Investment period (in months)" class="p-4 rounded-xl text-black text-14">
+                    <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold" onclick="analyzeRisk()">Analyze Risk ✨</button>
+                </div>
+                <div id="risk-result" class="mt-8 p-4 rounded-xl bg-gray-700 hidden">
+                    <h3 class="text-28 font-bold dark-yellow-text mb-2">Analysis Result</h3>
+                    <p class="text-14 chrome-accent-text" id="risk-percentage">Loading...</p>
+                    <p class="text-14 mt-2 chrome-accent-text" id="risk-explanation">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events and Mentorship Page -->
+        <div id="page-events" class="hidden">
+            <h1 class="text-44 font-bold dark-yellow-text mb-6">Events & Mentorship</h1>
+            <div class="flex flex-col md:flex-row md:space-x-8">
+                <div class="w-full md:w-2/3 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">Events Calendar</h2>
+                    <div id="calendar-container">
+                        <!-- Dynamic calendar will be generated here by JavaScript -->
+                    </div>
+                    
+                    <div id="event-details-modal" class="modal">
+                        <div class="modal-content">
+                            <span class="close-btn" onclick="closeModal('event-details-modal')">&times;</span>
+                            <h3 class="text-28 font-bold dark-yellow-text mb-4">Event Details</h3>
+                            <div id="event-content"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3 mt-8 md:mt-0 p-6 card">
+                    <h2 class="text-32 font-bold dark-yellow-text mb-4">Mentorship</h2>
+                    <p class="text-14 chrome-accent-text">Need personalized guidance? Our one-on-one mentorship sessions can help you navigate the markets with confidence. Sessions are available for a fee.</p>
+                    <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold mt-4">Book a Session</button>
+                    
+                    <h2 class="text-32 font-bold dark-yellow-text mt-8 mb-4">Our Mentors</h2>
+                    <div class="bg-gray-700 p-4 rounded-xl mb-4">
+                        <h3 class="text-28 font-bold chrome-accent-text">Jane Doe</h3>
+                        <p class="text-14 mt-2">Jane is a seasoned trader with over 15 years of experience in market analysis and risk management. She specializes in swing trading and has a passion for helping beginners build a solid foundation.</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-xl mb-4">
+                        <h3 class="text-28 font-bold chrome-accent-text">John Smith</h3>
+                        <p class="text-14 mt-2">John is a quantitative analyst and programmer who focuses on algorithmic trading strategies. He provides mentorship on building data-driven trading models and understanding market correlations.</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-xl">
+                        <h3 class="text-28 font-bold chrome-accent-text">Sarah Lee</h3>
+                        <p class="text-14 mt-2">Sarah is an expert in long-term value investing. Her mentorship focuses on fundamental analysis, portfolio construction, and identifying undervalued assets for sustainable growth.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Gemini-powered Chatbot -->
+    <button class="chat-btn text-28" onclick="openModal('chatbot-modal')">Chat ✨</button>
+
+    <div id="chatbot-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('chatbot-modal')">&times;</span>
+            <h3 class="text-28 font-bold dark-yellow-text mb-4">Ctrl Freaks Chatbot</h3>
+            <div id="chat-history" class="h-64 overflow-y-auto flex flex-col space-y-4 p-4 bg-gray-800 rounded-xl mb-4">
+                <div class="chat-message-bot">
+                    <p class="text-14">Hello! I'm your financial assistant. Ask me to explain a term or give you a quick quiz!</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <input id="chat-input" type="text" placeholder="Ask a question or start a quiz..." class="flex-grow p-4 rounded-xl text-black text-14">
+                <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold" onclick="handleChat()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for all page functionalities -->
+    <script>
+        // UI & Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        let chatHistory = [{ role: "model", parts: [{ text: "Hello! I'm your financial assistant. Ask me to explain a term or give you a quick quiz!" }] }];
+        // Note: The Gemini API call is commented out for local execution. You would need to add a valid API key here.
+        // const geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=YOUR_API_KEY_HERE";
+
+        async function handleChat() {
+            const chatInput = document.getElementById('chat-input');
+            const userMessage = chatInput.value.trim();
+            if (userMessage === '') return;
+
+            const chatHistoryDiv = document.getElementById('chat-history');
+
+            // Display user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message-user';
+            userMessageDiv.textContent = userMessage;
+            chatHistoryDiv.appendChild(userMessageDiv);
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+
+            chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+            chatInput.value = '';
+
+            // Add loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'chat-message-bot';
+            loadingIndicator.innerHTML = 'Thinking...';
+            chatHistoryDiv.appendChild(loadingIndicator);
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+
+            // Simulated response for local execution
+            setTimeout(() => {
+                const botMessage = "This is a simulated response for local execution. To enable a real chatbot, please provide a valid Gemini API key and uncomment the API call in the code.";
+                loadingIndicator.textContent = botMessage;
+                chatHistory.push({ role: "model", parts: [{ text: botMessage }] });
+                chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+            }, 1500);
+        }
+
+        // Home page: Comments & Feedback
+        // Firestore is disabled for local execution. Using localStorage as a simple alternative.
+        const COMMENTS_STORAGE_KEY = 'local_comments';
+
+        function renderComments() {
+            const commentsList = document.getElementById('comments-list');
+            commentsList.innerHTML = '';
+            
+            const comments = JSON.parse(localStorage.getItem(COMMENTS_STORAGE_KEY) || '[]');
+            
+            if (comments.length === 0) {
+                commentsList.innerHTML = '<p class="text-14 chrome-accent-text">No comments yet. Be the first!</p>';
+            } else {
+                comments.forEach(commentData => {
+                    const commentElement = document.createElement('div');
+                    commentElement.className = 'comment-card';
+                    commentElement.innerHTML = `
+                        <p class="text-14 chrome-accent-text">${commentData.text}</p>
+                        <p class="text-xs chrome-accent-text mt-1">
+                            By anonymous on ${new Date(commentData.timestamp).toLocaleDateString()}
+                        </p>
+                    `;
+                    commentsList.appendChild(commentElement);
+                });
+            }
+        }
+
+        function addComment() {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+            const statusMessage = document.getElementById('comment-status');
+
+            if (commentText === "") {
+                statusMessage.textContent = 'Comment cannot be empty.';
+                statusMessage.classList.remove('text-green-400');
+                statusMessage.classList.add('text-red-400');
+                return;
+            }
+            
+            try {
+                const comments = JSON.parse(localStorage.getItem(COMMENTS_STORAGE_KEY) || '[]');
+                comments.push({
+                    text: commentText,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+                statusMessage.textContent = 'Comment submitted successfully!';
+                statusMessage.classList.remove('text-red-400');
+                statusMessage.classList.add('text-green-400');
+                commentInput.value = '';
+                renderComments();
+            } catch (error) {
+                console.error("Error adding comment:", error);
+                statusMessage.textContent = 'Failed to submit comment.';
+                statusMessage.classList.remove('text-green-400');
+                statusMessage.classList.add('text-red-400');
+            }
+        }
+        
+        // Stock Simulator Logic
+        const PORTFOLIO_STORAGE_KEY = 'local_portfolio';
+        let portfolio = {
+            cash: 100000,
+            stocks: {}
+        };
+        
+        function loadPortfolio() {
+            const storedPortfolio = localStorage.getItem(PORTFOLIO_STORAGE_KEY);
+            if (storedPortfolio) {
+                portfolio = JSON.parse(storedPortfolio);
+            }
+            updatePortfolioDisplay();
+        }
+        
+        function showStockChart() {
+            const ticker = document.getElementById('ticker-input').value.trim().toUpperCase();
+            const graphContainer = document.getElementById('graph-container');
+            if (ticker) {
+                graphContainer.innerHTML = `<img src="https://placehold.co/600x400/36454F/07CBB8?text=Candlestick+Chart+for+${ticker}" alt="Stock Candlestick Chart for ${ticker}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                graphContainer.innerHTML = `<p class="text-14 chrome-accent-text">Please enter a valid ticker to view the chart.</p>`;
+            }
+        }
+        
+        function buyStock() {
+            const ticker = document.getElementById('ticker-input').value.trim().toUpperCase();
+            const quantity = parseInt(document.getElementById('quantity-input').value);
+            const status = document.getElementById('trade-status');
+
+            if (!ticker || !quantity || quantity <= 0) {
+                status.textContent = 'Please enter a valid ticker and quantity.';
+                status.classList.add('text-red-400');
+                return;
+            }
+
+            // Simulated stock data for demonstration
+            const stockPrice = 150 + Math.random() * 20; // Simulated price
+            const cost = stockPrice * quantity;
+
+            if (cost > portfolio.cash) {
+                status.textContent = 'Not enough cash to make this trade.';
+                status.classList.add('text-red-400');
+                return;
+            }
+
+            portfolio.cash -= cost;
+            if (portfolio.stocks[ticker]) {
+                portfolio.stocks[ticker].quantity += quantity;
+                portfolio.stocks[ticker].averagePrice = (portfolio.stocks[ticker].averagePrice * (portfolio.stocks[ticker].quantity - quantity) + cost) / portfolio.stocks[ticker].quantity;
+            } else {
+                portfolio.stocks[ticker] = { quantity: quantity, averagePrice: stockPrice };
+            }
+
+            localStorage.setItem(PORTFOLIO_STORAGE_KEY, JSON.stringify(portfolio));
+            status.textContent = `Successfully bought ${quantity} shares of ${ticker} for $${cost.toFixed(2)}.`;
+            status.classList.remove('text-red-400');
+            status.classList.add('text-green-400');
+            updatePortfolioDisplay();
+        }
+
+        function updatePortfolioDisplay() {
+            let totalValue = portfolio.cash;
+            const portfolioList = document.getElementById('portfolio-list');
+            portfolioList.innerHTML = '';
+            
+            for (const ticker in portfolio.stocks) {
+                const stock = portfolio.stocks[ticker];
+                const currentValue = stock.quantity * (150 + Math.random() * 20); // Simulated live price
+                totalValue += currentValue;
+                const profit = currentValue - (stock.quantity * stock.averagePrice);
+                const profitClass = profit >= 0 ? 'text-green-400' : 'text-red-400';
+                
+                const stockElement = document.createElement('div');
+                stockElement.className = 'mt-2 p-2 rounded-xl bg-gray-700';
+                stockElement.innerHTML = `
+                    <p class="text-14 font-bold chrome-accent-text">${ticker}</p>
+                    <p class="text-14 chrome-accent-text">Shares: ${stock.quantity}</p>
+                    <p class="text-14 chrome-accent-text">Current Value: $${currentValue.toFixed(2)}</p>
+                    <p class="text-14 chrome-accent-text">P/L: <span class="${profitClass}">$${profit.toFixed(2)}</span></p>
+                `;
+                portfolioList.appendChild(stockElement);
+            }
+            
+            document.getElementById('portfolio-value').textContent = `$${totalValue.toFixed(2)}`;
+        }
+        
+        // Risk Analyzer Logic
+        // Gemini API call is commented out.
+        async function analyzeRisk() {
+            const ticker = document.getElementById('analyzer-ticker').value.trim().toUpperCase();
+            const maturity = parseInt(document.getElementById('maturity-time').value);
+            const resultDiv = document.getElementById('risk-result');
+            const percentageText = document.getElementById('risk-percentage');
+            const explanationText = document.getElementById('risk-explanation');
+
+            if (!ticker || !maturity || maturity <= 0) {
+                percentageText.textContent = 'Please enter a valid ticker and investment period.';
+                percentageText.classList.add('text-red-400');
+                explanationText.textContent = '';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            resultDiv.classList.remove('hidden');
+            percentageText.textContent = 'Calculating risk...';
+            percentageText.classList.remove('text-green-400', 'text-red-400');
+            percentageText.classList.add('text-gray-400');
+            explanationText.textContent = 'Analyzing data...';
+
+            // Simulated analysis for local execution
+            setTimeout(() => {
+                const risk = Math.floor(Math.random() * 100);
+                const riskRating = risk > 70 ? 'High' : (risk > 40 ? 'Medium' : 'Low');
+                const riskExplanation = `This is a simulated risk analysis for ${ticker} over a ${maturity}-month period.
+Risk Rating: ${riskRating}
+Key Factors:
+- Simulated Volatility: The stock has shown moderate price swings.
+- Company Outlook: The company's future performance is uncertain.
+- Macroeconomic: Global economic trends may impact performance.
+Conclusion: The stock presents a ${riskRating.toLowerCase()}-risk investment. Further research is recommended.`;
+                
+                percentageText.textContent = `Calculated Risk: ${risk}%`;
+                percentageText.className = risk > 50 ? 'text-28 font-bold text-red-400' : 'text-28 font-bold text-green-400';
+                explanationText.textContent = riskExplanation;
+            }, 1500);
+        }
+
+        // Learn Trading Logic
+        function getDailyInsights() {
+            const wordElement = document.getElementById('word-of-day');
+            const definitionElement = document.getElementById('word-of-day-definition');
+            const stockElement = document.getElementById('stock-of-day');
+            const changeElement = document.getElementById('stock-of-day-change');
+
+            // Static content for local execution
+            wordElement.textContent = 'Bull Market';
+            definitionElement.textContent = 'A financial market of a group of securities in which prices are rising or are expected to rise.';
+            stockElement.textContent = 'AAPL';
+            changeElement.textContent = '+0.85%';
+        }
+
+        // Events and Mentorship Logic
+        const eventsData = {
+            '2025-9-5': { 
+                title: 'Q&A with a Trading Pro', 
+                time: '10:00 AM', 
+                description: 'Join our expert for a live Q&A session on market strategies. This is a great opportunity to ask your questions and learn directly from a professional trader.',
+                venue: 'Online Webinar'
+            },
+            '2025-9-10': { 
+                title: 'Beginners Workshop: How to Buy Your First Stock', 
+                time: '2:00 PM', 
+                description: 'A guided, step-by-step workshop to help you make your first trade. We will cover the basics of a brokerage account, placing an order, and reading stock charts.',
+                venue: 'Online Workshop'
+            },
+            '2025-9-15': { 
+                title: 'Live Market Analysis', 
+                time: '9:30 AM', 
+                description: 'Our team analyzes the market open and identifies potential opportunities. This is a fast-paced session for those who want to get a head start on their day.',
+                venue: 'Live Stream'
+            },
+            '2025-9-20': { 
+                title: 'Community Trading Challenge Kickoff', 
+                time: '5:00 PM', 
+                description: 'Start the challenge and compete against other traders in the simulator. The winner will receive a free one-on-one mentorship session.',
+                venue: 'In-app'
+            },
+            '2025-9-25': { 
+                title: 'Webinar: Understanding Risk Management', 
+                time: '1:00 PM', 
+                description: 'Learn how to protect your portfolio from market downturns. We will discuss stop-loss orders, diversification, and position sizing.',
+                venue: 'Online Webinar'
+            }
+        };
+
+        function renderEvents() {
+            const calendarContainer = document.getElementById('calendar-container');
+            calendarContainer.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold chrome-accent-text">September 2025</h3>
+                    <div class="flex space-x-2">
+                        <button class="text-white">&lt;</button>
+                        <button class="text-white">&gt;</button>
+                    </div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center max-w-xl mx-auto">
+                    <!-- Day names -->
+                    <div class="text-center font-bold dark-yellow-text p-2">Sun</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Mon</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Tue</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Wed</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Thu</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Fri</div>
+                    <div class="text-center font-bold dark-yellow-text p-2">Sat</div>
+                </div>
+            `;
+            const calendarGrid = document.getElementById('calendar-grid');
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            
+            const startingDay = firstDayOfMonth.getDay();
+            for (let i = 0; i < startingDay; i++) {
+                const emptyCell = document.createElement('div');
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
+                const dateCell = document.createElement('div');
+                dateCell.className = 'p-4 rounded-xl cursor-pointer relative';
+                
+                const eventDateKey = `${year}-${month + 1}-${i}`;
+                if (eventsData[eventDateKey]) {
+                    dateCell.classList.add('bg-gray-700');
+                    dateCell.innerHTML = `<span class="date-number dark-yellow-text">${i}</span><div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full secondary-color-bg"></div>`;
+                    dateCell.onclick = () => showEventDetails(eventDateKey);
+                } else {
+                    dateCell.classList.add('hover:bg-gray-700', 'transition-colors', 'duration-200');
+                    dateCell.innerHTML = `<span class="date-number chrome-accent-text">${i}</span>`;
+                }
+
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                     dateCell.classList.add('bg-gray-700', 'border-2', 'border-secondary-color-bg');
+                }
+
+                calendarGrid.appendChild(dateCell);
+            }
+        }
+
+        function showEventDetails(date) {
+            const eventContent = document.getElementById('event-content');
+            eventContent.innerHTML = '';
+            
+            const event = eventsData[date];
+
+            if (event) {
+                eventContent.innerHTML = `
+                    <h4 class="text-28 font-bold dark-yellow-text">${event.title}</h4>
+                    <p class="text-14 mt-2 chrome-accent-text">Date: ${date}</p>
+                    <p class="text-14 chrome-accent-text">Time: ${event.time}</p>
+                    <p class="text-14 chrome-accent-text">Venue: ${event.venue}</p>
+                    <p class="text-14 mt-4 chrome-accent-text">${event.description}</p>
+                    <button class="secondary-color-bg text-black px-6 py-2 rounded-full font-bold mt-4">Book Event</button>
+                `;
+            } else {
+                eventContent.innerHTML = `<p class="text-14 text-gray-400">No events scheduled for this date.</p>`;
+            }
+            openModal('event-details-modal');
+        }
+        
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            navigate(window.currentPage);
+        });
+        
+    </script>
+</body>
+</html>
+
